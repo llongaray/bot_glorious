@@ -46,7 +46,6 @@ class client(discord.Client):
                     await interaction.response.send_message(content=resposta, ephemeral=True)
                 except Exception as e:
                     await interaction.response.send_message(content=f"Ocorreu um erro ao verificar a integridade do bot e do banco de dados: {e}", ephemeral=True)
-                print("Acerto mizeravi! kkkkk")
                 user_name = interaction.user.name
                 self.log('verificar_integridade', user_name)
 
@@ -68,11 +67,11 @@ class client(discord.Client):
                         # Envia uma mensagem de sucesso com a menção do usuário que executou o comando, nome do usuário e o cargo adicionado
                         resposta = f"{interaction.user.mention}, o usuário {nome} com o cargo {cargo} foi adicionado ao banco de dados."
                         await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=True)
-                        user_name = interaction.user.name
-                        self.log('verificar_integridade', user_name)
                     except Exception as e:
                         # Se ocorrer um erro durante a execução do comando, uma mensagem de erro será enviada ao usuário
                         await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao adicionar o usuário ao banco de dados: {e}\n```", ephemeral=True)
+                    user_name = interaction.user.name
+                    self.log('cargo', user_name)
 
 
             
@@ -119,8 +118,8 @@ class client(discord.Client):
                     # Enviando a mensagem de confirmação
                     await interaction.response.send_message(f"{nome}, trabalho de {trabalho} adicionado para {nome}.", ephemeral=True)
                     
-                    user_name = interaction.user.name
-                    self.log('verificar_integridade', user_name)
+                user_name = interaction.user.name
+                self.log('job', user_name)
 
         @tree.command(guild=discord.Object(id=id_do_servidor), name='userjob', description='Mostrar dados de trabalho de um User.')
         async def userjob(interaction: discord.Interaction, nome: str):
@@ -160,8 +159,8 @@ class client(discord.Client):
                 # Lidando com exceções
                 await interaction.response.send_message(f"Ocorreu um erro: {e}", ephemeral=True)
                 
-                user_name = interaction.user.name
-                self.log('verificar_integridade', user_name)
+            user_name = interaction.user.name
+            self.log('userjob', user_name)
 
 
 
@@ -198,7 +197,7 @@ class client(discord.Client):
             await interaction.response.send_message(f"{nome}, todos os trabalhos registrados foram resetados para 0.", ephemeral=True)
 
             user_name = interaction.user.name
-            self.log('verificar_integridade', user_name)
+            self.log('resetjob', user_name)
     
 
         # Definindo a função app_command() para ouvir o comando "saldo"
@@ -239,8 +238,8 @@ class client(discord.Client):
                     embed = discord.Embed(description=f"💸 Saldo {nome}:\n```R$: {saldo}\n```", color=cor, ephemeral=True)
                     await interaction.response.send_message(embed=embed, ephemeral=True)
                     
-                    user_name = interaction.user.name
-                    self.log('verificar_integridade', user_name)
+                user_name = interaction.user.name
+                self.log('saldo', user_name)
         
         
         self.tree = tree
