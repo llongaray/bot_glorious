@@ -8,7 +8,7 @@ from discord import app_commands
 from cnx import cursor, conexao
 
 # Atribui o ID do servidor do Discord a uma variável
-id_do_servidor = 1078354743665115186
+id_do_servidor = 00 #ID_DO_SERVIDOR
 
 
 # Define a classe 'Client', que herda da classe 'discord.Client'
@@ -26,7 +26,7 @@ class client(discord.Client):
         self.synced = False
 
         # Atribui o valor 1080490737159901205 à variável 'channel_id'
-        self.channel_id = 1080490737159901205
+        self.channel_id = 00 #ID_DO_CANAL_PRIVADO
 
         # Cria um objeto 'CommandTree' e passa a instância da classe 'Client' como parâmetro
         tree = app_commands.CommandTree(self)
@@ -251,4 +251,4 @@ class client(discord.Client):
         print(f"Entremos como {self.user}.")
 
 aclient = client()
-aclient.run('MTA4NzE5NTE5MjI5OTM2ODQ0OA.GOj3cW.RnYNvx1l-qJj7mtI2UOm7kNsvZLIS1x86Ae2y8')
+aclient.run('TOKEN_DO_BOT')
