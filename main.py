@@ -11,10 +11,10 @@ from cnx import cursor, conexao
 id_do_servidor = 1078354743665115186
 
 
-# Define a classe 'client', que herda da classe 'discord.Client'
+# Define a classe 'Client', que herda da classe 'discord.Client'
 class client(discord.Client):
 
-    # Define o método construtor '__init__', que é executado ao criar uma instância da classe 'client'
+    # Define o método construtor '__init__', que é executado ao criar uma instância da classe 'Client'
     def __init__(self):
 
         # Chama o método construtor da classe pai 'discord.Client' e passa as intenções padrão como parâmetro
@@ -24,37 +24,32 @@ class client(discord.Client):
         self.synced = False
 
         # Atribui o valor 1080490737159901205 à variável 'channel_id'
-        channel_id = 1080490737159901205
+        self.channel_id = 1080490737159901205
 
-        # Atribui o valor da variável 'channel_id' à variável de instância 'self.channel_id'
-        self.channel_id = channel_id
-
-
-        # Cria um objeto 'CommandTree' e passa a instância da classe 'client' como parâmetro
+        # Cria um objeto 'CommandTree' e passa a instância da classe 'Client' como parâmetro
         tree = app_commands.CommandTree(self)
 
-        
         # Define um comando para o bot chamado 'verificar_integridade', que verifica a integridade do bot e do banco de dados
         @tree.command(guild=discord.Object(id=id_do_servidor), name='verificar_integridade', description='Verifica a integridade do bot e do banco de dados.')
         async def verificar_integridade(interaction: discord.Interaction):
             if interaction.channel_id != self.channel_id:  # Verifica o canal
-                await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+                await interaction.response.send_message(content="Canal errado rapaz! kkkkk", ephemeral=True)
                 return
             else:
                 try:
                     cursor.execute("SELECT COUNT(*) FROM usuarios")
                     num_usuarios = cursor.fetchone()[0]
                     resposta = f"O bot está funcionando corretamente e há {num_usuarios} usuários cadastrados no banco de dados."
-                    await interaction.response.send_message(f"```fix\n{resposta}\n```", ephemeral=False)
+                    await interaction.response.send_message(content=resposta, ephemeral=True)
                 except Exception as e:
-                    await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao verificar a integridade do bot e do banco de dados: {e}\n```", ephemeral=False)
-                print(f"```fix\nAcerto mizeravi! kkkkk\n```")
+                    await interaction.response.send_message(content=f"Ocorreu um erro ao verificar a integridade do bot e do banco de dados: {e}", ephemeral=False)
+                print("Acerto mizeravi! kkkkk")
+
 
 
         # Define um comando para o bot chamado 'cargo', que adiciona um usuário ao banco de dados
         @tree.command(guild=discord.Object(id=id_do_servidor), name='cargo', description='Adiciona usuário ao banco de dados.')
         async def cargo(interaction: discord.Interaction, nome: str, cargo: str):
-            async def verificar_integridade(interaction: discord.Interaction):
                 if interaction.channel_id != self.channel_id:  # Verifica o canal
                     await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
                     return
@@ -68,10 +63,10 @@ class client(discord.Client):
                         conexao.commit()
                         # Envia uma mensagem de sucesso com a menção do usuário que executou o comando, nome do usuário e o cargo adicionado
                         resposta = f"{interaction.user.mention}, o usuário {nome} com o cargo {cargo} foi adicionado ao banco de dados."
-                        await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=False)
+                        await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=True)
                     except Exception as e:
                         # Se ocorrer um erro durante a execução do comando, uma mensagem de erro será enviada ao usuário
-                        await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao adicionar o usuário ao banco de dados: {e}\n```", ephemeral=False)
+                        await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao adicionar o usuário ao banco de dados: {e}\n```", ephemeral=True)
 
 
             
@@ -86,7 +81,6 @@ class client(discord.Client):
         # Definindo a função app_command() para ouvir o comando "job"
         @tree.command(guild=discord.Object(id=id_do_servidor), name='job', description='Registra o trabalho feito pelo usuário.')
         async def job(interaction: discord.Interaction, nome: str, trabalho: str):
-            async def verificar_integridade(interaction: discord.Interaction):
                 if interaction.channel_id != self.channel_id:  # Verifica o canal
                     await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
                     return
@@ -121,97 +115,80 @@ class client(discord.Client):
 
         @tree.command(guild=discord.Object(id=id_do_servidor), name='userjob', description='Mostrar dados de trabalho de um User.')
         async def userjob(interaction: discord.Interaction, nome: str):
-            async def verificar_integridade(interaction: discord.Interaction):
-                if interaction.channel_id != self.channel_id:  # Verifica o canal
-                    await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+            if interaction.channel_id != self.channel_id:
+                await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+                return
+
+            try:
+                cursor = conexao.cursor()
+                sql = f"SELECT cargo, traducao, revisao, clear, cldr, typesetter, qc FROM usuarios WHERE user = '{nome}'"
+                cursor.execute(sql)
+                resultado = cursor.fetchone()
+                cursor.close()
+
+                if resultado is None:
+                    await interaction.response.send_message(f"{nome} não foi encontrado na lista de usuários.")
                     return
-                else:
-                    # Selecionando o usuário na tabela "usuarios"
-                    cursor = conexao.cursor()
-                    sql = f"SELECT * FROM usuarios WHERE user = '{nome}'"
-                    cursor.execute(sql)
-                    resultado = cursor.fetchone()
-                    cursor.close()
 
-                    # Se o usuário não estiver na tabela, enviar uma mensagem de erro
-                    if resultado is None:
-                        await interaction.response.send_message(f"{nome} não foi encontrado na lista de usuários.")
-                        return
+                # Obtendo os valores de cada tipo de trabalho usando os nomes de coluna
+                cargo, traducao, revisao, clear, cldr, typesetter, qc = resultado
 
-                    # Obtendo os valores de cada tipo de trabalho
-                    cargo = resultado[2]
-                    traducao = resultado[3]
-                    revisao = resultado[4]
-                    clear = resultado[5]
-                    cldr = resultado[6]
-                    typesetter = resultado[7]
-                    qc = resultado[8]
+                # Formatando a mensagem de resposta usando f-strings
+                resposta1 = f'\n   {nome}'
+                resposta = f'```Capítulos feitos no mês:\n'
+                resposta += f'Tradução: {traducao:02d}\n'
+                resposta += f'Revisão: {revisao:02d}\n'
+                resposta += f'Clear: {clear:02d}\n'
+                resposta += f'CLRD: {cldr:02d}\n'
+                resposta += f'Typesetter: {typesetter:02d}\n'
+                resposta += f'QC: {qc:02d}```'
 
-                    # Definindo as cores para serem utilizadas na mensagem
-                    cor = 0x800080 # Roxo
-                    cor_verde = 0x00FF00 # Verde
+                # Usando as constantes predefinidas do objeto Embed
+                embed = discord.Embed(description=f"{resposta1}\n{resposta}", color=discord.Color.purple())
+                await interaction.response.send_message(embed=embed, ephemeral=True)
 
-                    # Formatando a mensagem de resposta
-                    resposta1 = f'\n   {nome}' # Nome do usuário
-                    resposta = f'```Capítulos feitos no mês:\nTradução: {traducao:02d}\n'
-                    resposta += f'Revisão: {revisao:02d}\n'
-                    resposta += f'Clear: {clear:02d}\n'
-                    resposta += f'CLRD: {cldr:02d}\n'
-                    resposta += f'Typpesetter: {typesetter:02d}\n'
-                    resposta += f'QC: {qc:02d}```'
-                    
-                    # Enviando a mensagem de resposta
-                    embed = discord.Embed(description=f"{resposta1}\n{resposta}", color=cor)
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
+            except Exception as e:
+                # Lidando com exceções
+                await interaction.response.send_message(f"Ocorreu um erro: {e}", ephemeral=True)
 
 
-        # Definindo a função app_command() para ouvir o comando "resetjob"
+
         @tree.command(guild=discord.Object(id=id_do_servidor), name='resetjob', description='Reseta o trabalho feito pelo usuário.')
-        async def resetjob(interaction: discord.Interaction, nome: str, trabalho: str):
-            async def verificar_integridade(interaction: discord.Interaction):
-                if interaction.channel_id != self.channel_id:  # Verifica o canal
-                    await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
-                    return
-                else:
-                    # Verificando se o trabalho escolhido é válido
-                    trabalhos_validos = ["traducao", "revisao", "clear", "cldr", "typesetter", "qc"]
-                    if trabalho not in trabalhos_validos:
-                        await interaction.response.send_message(f"{nome}, trabalho inválido. Por favor, escolha um dos seguintes trabalhos: {', '.join(trabalhos_validos)}.")
-                        return
+        async def resetjob(interaction: discord.Interaction, nome: str):
+            if interaction.channel_id != self.channel_id:  # Verifica o canal
+                await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+                return
 
-                    # Pesquisando o nome do usuário na tabela "usuarios"
-                    cursor = conexao.cursor()
-                    sql = f"SELECT * FROM usuarios WHERE user = '{nome}'"
-                    cursor.execute(sql)
-                    resultado = cursor.fetchone()
-                    cursor.close()
+            # Pesquisando o nome do usuário na tabela "usuarios"
+            cursor = conexao.cursor()
+            sql = "SELECT * FROM usuarios WHERE user = %s"
+            cursor.execute(sql, (nome,))
+            resultado = cursor.fetchone()
+            cursor.close()
 
-                    # Se o usuário não estiver na tabela, adicioná-lo com todos os trabalhos com 0
-                    if resultado is None:
-                        cursor = conexao.cursor()
-                        sql = f"INSERT INTO usuarios (user, cargo, traducao, revisao, clear, cldr, typesetter, qc) VALUES ('{nome}', '', 0, 0, 0, 0, 0, 0)"
-                        cursor.execute(sql)
-                        conexao.commit()
-                        cursor.close()
-                        resultado = (nome, '', 0, 0, 0, 0, 0, 0)
+            if resultado is None:
+                # Se o usuário não estiver na tabela, adicioná-lo com todos os trabalhos com 0
+                cursor = conexao.cursor()
+                sql = "INSERT INTO usuarios (user, cargo, traducao, revisao, clear, cldr, typesetter, qc) VALUES (%s, '', 0, 0, 0, 0, 0, 0)"
+                cursor.execute(sql, (nome,))
+                conexao.commit()
+                cursor.close()
+                resultado = (nome, '', 0, 0, 0, 0, 0, 0)
 
-                    # Verificando se o valor da coluna correspondente ao trabalho escolhido é diferente de zero
-                    index = trabalhos_validos.index(trabalho) + 3  # Índice da coluna na tupla resultado
-                    if resultado[index] != 0:
-                        # Atualizando o valor da coluna para zero
-                        cursor = conexao.cursor()
-                        sql = f"UPDATE usuarios SET {trabalho} = 0 WHERE user = '{nome}'"
-                        cursor.execute(sql)
-                        conexao.commit()
-                        cursor.close()
+            # Atualiza todos os trabalhos para zero
+            cursor = conexao.cursor()
+            sql = f"UPDATE usuarios SET traducao = 0, revisao = 0, clear = 0, cldr = 0, typesetter = 0, qc = 0 WHERE user = %s"
+            cursor.execute(sql, (nome,))
+            conexao.commit()
+            cursor.close()
 
-                        # Enviando a mensagem de confirmação
-                        await interaction.response.send_message(f"{nome}, os trabalhos registrados foram resetados para 0.")
+            # Enviando a mensagem de confirmação
+            await interaction.response.send_message(f"{nome}, todos os trabalhos registrados foram resetados para 0.")
+
 
         # Definindo a função app_command() para ouvir o comando "saldo"
         @tree.command(guild=discord.Object(id=id_do_servidor), name='saldo', description='Exibe o saldo do usuário.')
         async def saldo(interaction: discord.Interaction, nome: str):
-            async def verificar_integridade(interaction: discord.Interaction):
                 if interaction.channel_id != self.channel_id:  # Verifica o canal
                     await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
                     return
@@ -256,4 +233,4 @@ class client(discord.Client):
         print(f"Entremos como {self.user}.")
 
 aclient = client()
-aclient.run('MTA4NzE5NTE5MjI5OTM2ODQ0OA.GNZ5jf.GHwbuZba6iYH_p3zBBEsvAGYwVwzIPofP6DmFc')
+aclient.run('MTA4NzE5NTE5MjI5OTM2ODQ0OA.GL_CrV.gHhh6q0HCmr3m_k5Dmmt484OWDguIgKpIPGdyM')
