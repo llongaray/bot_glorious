@@ -241,7 +241,55 @@ class client(discord.Client):
                 user_name = interaction.user.name
                 self.log('saldo', user_name)
         
-        
+        # Define um comando para o bot chamado 'dados_do_banco', que mostra todos os dados do banco de dados
+        @tree.command(guild=discord.Object(id=id_do_servidor), name='dados_do_banco', description='Mostra todos os dados do banco de dados.')
+        async def dados_do_banco(interaction: discord.Interaction):
+            # Verifica se o comando foi enviado no canal correto
+            if interaction.channel_id != self.channel_id:
+                await interaction.response.send_message(content="Canal errado rapaz! kkkkk", ephemeral=True)
+                return
+            else:
+                try:
+                    # Executa uma consulta SQL para selecionar todos os dados do banco de dados
+                    cursor.execute("SELECT * FROM usuarios")
+                    # Recupera todos os resultados da consulta
+                    dados = cursor.fetchall()
+                    # Monta uma resposta com todos os dados recuperados do banco de dados
+                    resposta = "Dados do banco de dados:\n"
+                    for dado in dados:
+                        resposta += f"\nUsuário: {dado[0]}\nCargo: {dado[1]}\nTradução: {dado[2]}\nRevisão: {dado[3]}\nClear: {dado[4]}\nCLDR: {dado[5]}\nTypesetter: {dado[6]}\nQC: {dado[7]}\nSaldo: {dado[8]}\n"
+                    # Envia a resposta com todos os dados do banco de dados de volta para o usuário que solicitou
+                    await interaction.response.send_message(content=resposta, ephemeral=True)
+                except Exception as e:
+                    # Envia uma mensagem de erro caso ocorra uma exceção ao tentar recuperar os dados do banco de dados
+                    await interaction.response.send_message(content=f"Ocorreu um erro ao mostrar os dados do banco de dados: {e}", ephemeral=True)
+                
+                # Registra a ação na log do bot
+                user_name = interaction.user.name
+                self.log('dados_do_banco', user_name)
+                
+        # Comando para excluir um usuário da tabela 'usuarios'
+        @tree.command(guild=discord.Object(id=id_do_servidor), name='excluir_usuario', description='Exclui um usuário do banco de dados.')
+        async def excluir_usuario(interaction: discord.Interaction, nome: str):
+            if interaction.channel_id != self.channel_id:  # Verifica o canal
+                await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+                return
+            else:
+                try:
+                    # Cria uma query SQL para excluir o usuário da tabela com o nome fornecido
+                    excluir_usuario = f'DELETE FROM usuarios WHERE user = "{nome}"'
+                    # Executa a query SQL no cursor e faz commit na conexão
+                    cursor.execute(excluir_usuario)
+                    conexao.commit()
+                    # Envia uma mensagem de sucesso com a menção do usuário que executou o comando e o nome do usuário excluído
+                    resposta = f"{interaction.user.mention}, o usuário {nome} foi excluído do banco de dados."
+                    await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=True)
+                except Exception as e:
+                    # Se ocorrer um erro durante a execução do comando, uma mensagem de erro será enviada ao usuário
+                    await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao excluir o usuário do banco de dados: {e}\n```", ephemeral=True)
+                user_name = interaction.user.name
+                self.log('excluir_usuario', user_name)
+
         self.tree = tree
 
     async def on_ready(self):
