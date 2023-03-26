@@ -44,6 +44,7 @@ class client(discord.Client):
                     num_usuarios = cursor.fetchone()[0]
                     resposta = f"O bot está funcionando corretamente e há {num_usuarios} usuários cadastrados no banco de dados."
                     await interaction.response.send_message(content=resposta, ephemeral=True)
+                    
                 except Exception as e:
                     await interaction.response.send_message(content=f"Ocorreu um erro ao verificar a integridade do bot e do banco de dados: {e}", ephemeral=True)
                 user_name = interaction.user.name
@@ -67,6 +68,7 @@ class client(discord.Client):
                         # Envia uma mensagem de sucesso com a menção do usuário que executou o comando, nome do usuário e o cargo adicionado
                         resposta = f"{interaction.user.mention}, o usuário {nome} com o cargo {cargo} foi adicionado ao banco de dados."
                         await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=True)
+                        
                     except Exception as e:
                         # Se ocorrer um erro durante a execução do comando, uma mensagem de erro será enviada ao usuário
                         await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao adicionar o usuário ao banco de dados: {e}\n```", ephemeral=True)
@@ -120,6 +122,9 @@ class client(discord.Client):
                     
                 user_name = interaction.user.name
                 self.log('job', user_name)
+                
+        
+
 
         @tree.command(guild=discord.Object(id=id_do_servidor), name='userjob', description='Mostrar dados de trabalho de um User.')
         async def userjob(interaction: discord.Interaction, nome: str):
@@ -137,9 +142,18 @@ class client(discord.Client):
                 if resultado is None:
                     await interaction.response.send_message(f"{nome} não foi encontrado na lista de usuários.", ephemeral=True)
                     return
-
+                    
                 # Obtendo os valores de cada tipo de trabalho usando os nomes de coluna
                 cargo, traducao, revisao, clear, cldr, typesetter, qc = resultado
+                
+                saldo = traducao * 1.25 + revisao + clear * 1.5 + cldr * 1.5 + typesetter * 2
+                
+                # Atualizando o valor da coluna para zero
+                cursor = conexao.cursor()
+                sql = f"UPDATE usuarios SET saldo = {saldo} WHERE user = '{nome}'"
+                cursor.execute(sql)
+                conexao.commit()
+                cursor.close() 
 
                 # Formatando a mensagem de resposta usando f-strings
                 resposta1 = f'\n   {nome}'
@@ -149,10 +163,12 @@ class client(discord.Client):
                 resposta += f'Clear: {clear:02d}\n'
                 resposta += f'CLRD: {cldr:02d}\n'
                 resposta += f'Typesetter: {typesetter:02d}\n'
-                resposta += f'QC: {qc:02d}```'
+                resposta += f'QC: {qc:02d}\n'
+                resposta += f'Saldo: {saldo:.2f}```'
+
 
                 # Usando as constantes predefinidas do objeto Embed
-                embed = discord.Embed(description=f"{resposta1}\n{resposta}", color=discord.Color.purple())
+                embed = discord.Embed(description=f"{resposta1}\n{resposta}", color=discord.Color.red())
                 await interaction.response.send_message(embed=embed, ephemeral=True)
 
             except Exception as e:
@@ -200,46 +216,7 @@ class client(discord.Client):
             self.log('resetjob', user_name)
     
 
-        # Definindo a função app_command() para ouvir o comando "saldo"
-        @tree.command(guild=discord.Object(id=id_do_servidor), name='saldo', description='Exibe o saldo do usuário.')
-        async def saldo(interaction: discord.Interaction, nome: str):
-                if interaction.channel_id != self.channel_id:  # Verifica o canal
-                    await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
-                    return
-                else:
-                    # Selecionando o usuário na tabela "usuarios"
-                    cursor = conexao.cursor()
-                    sql = f"SELECT * FROM usuarios WHERE user = '{nome}'"
-                    cursor.execute(sql)
-                    resultado = cursor.fetchone()
-                    cursor.close()
-                    
-                    saldo = resultado[3]*1.25
-                    print(f'Saldo 3: {saldo}')
-                    saldo += resultado[4]
-                    print(f'Saldo 4: {saldo}')
-                    saldo += (resultado[5]+resultado[6])*1.5
-                    print(f'Saldo 5 com 6: {saldo}')
-                    saldo += resultado[7]*2
-                    print(f'Saldo 7: {saldo}')
 
-                    # Atualizando o valor da coluna para zero
-                    cursor = conexao.cursor()
-                    sql = f"UPDATE usuarios SET saldo = {saldo} WHERE user = '{nome}'"
-                    cursor.execute(sql)
-                    conexao.commit()
-                    cursor.close()            
-                    
-                    # Exibindo o saldo do usuário
-                    # await interaction.response.send_message(f"💸Saldo {nome}:💸\n```R$: {saldo}\n```")
-
-                    # Enviando a mensagem de resposta
-                    cor = 0x800080
-                    embed = discord.Embed(description=f"💸 Saldo {nome}:\n```R$: {saldo}\n```", color=cor, ephemeral=True)
-                    await interaction.response.send_message(embed=embed, ephemeral=True)
-                    
-                user_name = interaction.user.name
-                self.log('saldo', user_name)
         
         # Define um comando para o bot chamado 'dados_do_banco', que mostra todos os dados do banco de dados
         @tree.command(guild=discord.Object(id=id_do_servidor), name='dados_do_banco', description='Mostra todos os dados do banco de dados.')
@@ -257,9 +234,12 @@ class client(discord.Client):
                     # Monta uma resposta com todos os dados recuperados do banco de dados
                     resposta = "Dados do banco de dados:\n"
                     for dado in dados:
-                        resposta += f"\nUsuário: {dado[0]}\nCargo: {dado[1]}\nTradução: {dado[2]}\nRevisão: {dado[3]}\nClear: {dado[4]}\nCLDR: {dado[5]}\nTypesetter: {dado[6]}\nQC: {dado[7]}\nSaldo: {dado[8]}\n"
+                        saldo = dado[9]
+                        resposta += f"\nUsuário: {dado[1]}\nCargo: {dado[2]}\nTradução: {dado[3]:02d}\nRevisão: {dado[4]:02d}\nClear: {dado[5]:02d}\nCLDR: {dado[6]:02d}\nTypesetter: {dado[7]:02d}\nQC: {dado[8]:02d}\nSaldo: {saldo:.2f}\n"
                     # Envia a resposta com todos os dados do banco de dados de volta para o usuário que solicitou
                     await interaction.response.send_message(content=resposta, ephemeral=True)
+
+
                 except Exception as e:
                     # Envia uma mensagem de erro caso ocorra uma exceção ao tentar recuperar os dados do banco de dados
                     await interaction.response.send_message(content=f"Ocorreu um erro ao mostrar os dados do banco de dados: {e}", ephemeral=True)
