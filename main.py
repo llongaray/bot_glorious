@@ -32,6 +32,9 @@ class client(discord.Client):
         tree = app_commands.CommandTree(self)
 
 
+
+#Copiar a partir DAQUI!!!!!!!!
+
         # Define um comando para o bot chamado 'verificar_integridade', que verifica a integridade do bot e do banco de dados
         @tree.command(guild=discord.Object(id=id_do_servidor), name='verificar_integridade', description='Verifica a integridade do bot e do banco de dados.')
         async def verificar_integridade(interaction: discord.Interaction):
@@ -47,47 +50,52 @@ class client(discord.Client):
                     
                 except Exception as e:
                     await interaction.response.send_message(content=f"Ocorreu um erro ao verificar a integridade do bot e do banco de dados: {e}", ephemeral=True)
-                user_name = interaction.user.name
-                self.log('verificar_integridade', user_name)
+            user_name = interaction.user.name
+            self.log('verificar_integridade', user_name)
+
 
 
         # Define um comando para o bot chamado 'cargo', que adiciona um usuário ao banco de dados
         @tree.command(guild=discord.Object(id=id_do_servidor), name='cargo', description='Adiciona usuário ao banco de dados.')
         async def cargo(interaction: discord.Interaction, nome: str, cargo: str):
-                if interaction.channel_id != self.channel_id:  # Verifica o canal
-                    await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
-                    return
-                else:
-                    try:
-                        zero = 0
-                        # Cria uma query SQL para inserir o usuário no banco de dados com os dados fornecidos
-                        inserir_usuario = f'INSERT INTO usuarios (user, cargo, traducao, revisao, clear, cldr, typesetter, qc, saldo) VALUES ("{nome}","{cargo}", {zero}, {zero}, {zero}, {zero}, {zero}, {zero}, {zero})'
-                        # Executa a query SQL no cursor e faz commit na conexão
-                        cursor.execute(inserir_usuario)
-                        conexao.commit()
-                        # Envia uma mensagem de sucesso com a menção do usuário que executou o comando, nome do usuário e o cargo adicionado
-                        resposta = f"{interaction.user.mention}, o usuário {nome} com o cargo {cargo} foi adicionado ao banco de dados."
-                        await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=True)
-                        
-                    except Exception as e:
-                        # Se ocorrer um erro durante a execução do comando, uma mensagem de erro será enviada ao usuário
-                        await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao adicionar o usuário ao banco de dados: {e}\n```", ephemeral=True)
-                    user_name = interaction.user.name
-                    self.log('cargo', user_name)
+            if interaction.channel_id != self.channel_id:  # Verifica o canal
+                await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+                return
+            else:
+                try:
+                    zero = 0
+                    # Cria uma query SQL para inserir o usuário no banco de dados com os dados fornecidos
+                    cursor = conexao.cursor() # Abrindo o cursor para executar uma consulta no banco de dados
+                    inserir_usuario = f'INSERT INTO usuarios (user, cargo, traducao, revisao, clrd, typer, qc, saldo) VALUES ("{nome}","{cargo}", {zero}, {zero}, {zero}, {zero}, {zero}, {zero})'
+                    # Executa a query SQL no cursor e faz commit na conexão
+                    cursor.execute(inserir_usuario)
+                    conexao.commit() # Salvando as alterações no banco de dados
+                    cursor.close() # Fechando o cursor para liberar recursos do sistema
+                    # Envia uma mensagem de sucesso com a menção do usuário que executou o comando, nome do usuário e o cargo adicionado
+                    resposta = f"{interaction.user.mention}, o usuário {nome} com o cargo {cargo} foi adicionado ao banco de dados."
+                    await interaction.response.send_message(f"diff\n+ {resposta}\n", ephemeral=True)
+                except Exception as e:
+                    # Se ocorrer um erro durante a execução do comando, uma mensagem de erro será enviada ao usuário
+                    await interaction.response.send_message(f"```diff\n- Ocorreu um erro ao adicionar o usuário ao banco de dados: {e}\n```", ephemeral=True)
+                # Registra a ação no log
+                user_name = interaction.user.name
+                self.log('cargo', user_name)
+
+
 
 
             
         # Definindo a função atualizar_trabalho() para atualizar o valor de um trabalho feito pelo usuário na tabela "usuarios"
-        def atualizar_trabalho(nome, trabalho):
+        def atualizar_trabalho(nome, trabalho, valor):
             cursor = conexao.cursor() # Abrindo o cursor para executar uma consulta no banco de dados
-            sql = f"UPDATE usuarios SET {trabalho} = {trabalho} + 1 WHERE user = '{nome}'" # Construindo a consulta SQL para atualizar o valor correspondente na tabela "usuarios"
+            sql = f"UPDATE usuarios SET {trabalho} = {trabalho} + {valor} WHERE user = '{nome}'" # Construindo a consulta SQL para atualizar o valor correspondente na tabela "usuarios"
             cursor.execute(sql) # Executando a consulta SQL
             conexao.commit() # Salvando as alterações no banco de dados
             cursor.close() # Fechando o cursor para liberar recursos do sistema
 
         # Definindo a função app_command() para ouvir o comando "job"
         @tree.command(guild=discord.Object(id=id_do_servidor), name='job', description='Registra o trabalho feito pelo usuário.')
-        async def job(interaction: discord.Interaction, nome: str, trabalho: str):
+        async def job(interaction: discord.Interaction, nome: str, trabalho: str, valor: str):
                 if interaction.channel_id != self.channel_id:  # Verifica o canal
                     await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
                     return
@@ -115,7 +123,7 @@ class client(discord.Client):
                         resultado = (nome, '', 0, 0, 0, 0, 0, 0) # Definindo o valor de resultado como uma tupla com o nome do usuário, o cargo vazio e todos os trabalhos com valor 0
 
                     # Atualizando o valor correspondente na tabela "usuarios"
-                    atualizar_trabalho(nome, trabalho)
+                    atualizar_trabalho(nome, trabalho, valor)
 
                     # Enviando a mensagem de confirmação
                     await interaction.response.send_message(f"{nome}, trabalho de {trabalho} adicionado para {nome}.", ephemeral=True)
@@ -123,57 +131,46 @@ class client(discord.Client):
                 user_name = interaction.user.name
                 self.log('job', user_name)
                 
-        
 
-
+                   
         @tree.command(guild=discord.Object(id=id_do_servidor), name='userjob', description='Mostrar dados de trabalho de um User.')
         async def userjob(interaction: discord.Interaction, nome: str):
-            if interaction.channel_id != self.channel_id:
-                await interaction.response.send_message(f"```fix\nCanal errado rapais! kkkkk\n```", ephemeral=True)
+            cursor = conexao.cursor()
+            sql = f"SELECT cargo, traducao, revisao, clrd, typer, qc FROM usuarios WHERE user = '{nome}'"
+            cursor.execute(sql)
+            resultado = cursor.fetchone()
+            cursor.close()
+
+            if resultado is None:
+                await interaction.response.send_message(f"{nome} não foi encontrado na lista de usuários.", ephemeral=True)
                 return
-
-            try:
-                cursor = conexao.cursor()
-                sql = f"SELECT cargo, traducao, revisao, clear, cldr, typesetter, qc FROM usuarios WHERE user = '{nome}'"
-                cursor.execute(sql)
-                resultado = cursor.fetchone()
-                cursor.close()
-
-                if resultado is None:
-                    await interaction.response.send_message(f"{nome} não foi encontrado na lista de usuários.", ephemeral=True)
-                    return
                     
-                # Obtendo os valores de cada tipo de trabalho usando os nomes de coluna
-                cargo, traducao, revisao, clear, cldr, typesetter, qc = resultado
+            # Obtendo os valores de cada tipo de trabalho usando os nomes de coluna
+            cargo, traducao, revisao, clrd, typer, qc = resultado
                 
-                saldo = traducao * 1.25 + revisao + clear * 1.5 + cldr * 1.5 + typesetter * 2
+            saldo = traducao * 1.25 + revisao + clrd * 1.5 + typer * 2 + qc
                 
-                # Atualizando o valor da coluna para zero
-                cursor = conexao.cursor()
-                sql = f"UPDATE usuarios SET saldo = {saldo} WHERE user = '{nome}'"
-                cursor.execute(sql)
-                conexao.commit()
-                cursor.close() 
+            # Atualizando o valor da coluna para zero
+            cursor = conexao.cursor()
+            sql = f"UPDATE usuarios SET saldo = {saldo} WHERE user = '{nome}'"
+            cursor.execute(sql)
+            conexao.commit()
+            cursor.close() 
 
-                # Formatando a mensagem de resposta usando f-strings
-                resposta1 = f'\n   {nome}'
-                resposta = f'```Capítulos feitos no mês:\n'
-                resposta += f'Tradução: {traducao:02d}\n'
-                resposta += f'Revisão: {revisao:02d}\n'
-                resposta += f'Clear: {clear:02d}\n'
-                resposta += f'CLRD: {cldr:02d}\n'
-                resposta += f'Typesetter: {typesetter:02d}\n'
-                resposta += f'QC: {qc:02d}\n'
-                resposta += f'Saldo: {saldo:.2f}```'
+            # Formatando a mensagem de resposta usando f-strings
+            resposta1 = f'\n   {nome}'
+            resposta = f'```Capítulos feitos no mês:\n'
+            resposta += f'Tradução: {traducao:02d}\n'
+            resposta += f'Revisão: {revisao:02d}\n'
+            resposta += f'Edição: {clrd:02d}\n'
+            resposta += f'Typer: {typer:02d}\n'
+            resposta += f'QC: {qc:02d}\n'
+            resposta += f'Saldo: {saldo:.2f}```'
 
 
-                # Usando as constantes predefinidas do objeto Embed
-                embed = discord.Embed(description=f"{resposta1}\n{resposta}", color=discord.Color.red())
-                await interaction.response.send_message(embed=embed, ephemeral=True)
-
-            except Exception as e:
-                # Lidando com exceções
-                await interaction.response.send_message(f"Ocorreu um erro: {e}", ephemeral=True)
+            # Usando as constantes predefinidas do objeto Embed
+            embed = discord.Embed(description=f"{resposta1}\n{resposta}", color=discord.Color.red())
+            await interaction.response.send_message(embed=embed, ephemeral=True)
                 
             user_name = interaction.user.name
             self.log('userjob', user_name)
@@ -196,7 +193,7 @@ class client(discord.Client):
             if resultado is None:
                 # Se o usuário não estiver na tabela, adicioná-lo com todos os trabalhos com 0
                 cursor = conexao.cursor()
-                sql = "INSERT INTO usuarios (user, cargo, traducao, revisao, clear, cldr, typesetter, qc) VALUES (%s, '', 0, 0, 0, 0, 0, 0)"
+                sql = "INSERT INTO usuarios (user, cargo, traducao, revisao, clrd, typer, qc) VALUES (%s, '', 0, 0, 0, 0, 0, 0)"
                 cursor.execute(sql, (nome,))
                 conexao.commit()
                 cursor.close()
@@ -204,7 +201,7 @@ class client(discord.Client):
 
             # Atualiza todos os trabalhos para zero
             cursor = conexao.cursor()
-            sql = f"UPDATE usuarios SET traducao = 0, revisao = 0, clear = 0, cldr = 0, typesetter = 0, qc = 0 WHERE user = %s"
+            sql = f"UPDATE usuarios SET traducao = 0, revisao = 0, clrd = 0, typer = 0, qc = 0 WHERE user = %s"
             cursor.execute(sql, (nome,))
             conexao.commit()
             cursor.close()
@@ -234,8 +231,8 @@ class client(discord.Client):
                     # Monta uma resposta com todos os dados recuperados do banco de dados
                     resposta = "Dados do banco de dados:\n"
                     for dado in dados:
-                        saldo = dado[9]
-                        resposta += f"\nUsuário: {dado[1]}\nCargo: {dado[2]}\nTradução: {dado[3]:02d}\nRevisão: {dado[4]:02d}\nClear: {dado[5]:02d}\nCLDR: {dado[6]:02d}\nTypesetter: {dado[7]:02d}\nQC: {dado[8]:02d}\nSaldo: {saldo:.2f}\n"
+                        saldo = dado[8]
+                        resposta += f"\nUsuário: {dado[1]}\n"
                     # Envia a resposta com todos os dados do banco de dados de volta para o usuário que solicitou
                     await interaction.response.send_message(content=resposta, ephemeral=True)
 
@@ -271,6 +268,10 @@ class client(discord.Client):
                 self.log('excluir_usuario', user_name)
 
         self.tree = tree
+        
+#Até aqui copiar
+
+
 
     async def on_ready(self):
         await self.tree.sync(guild=discord.Object(id=id_do_servidor))
